@@ -1,17 +1,15 @@
 const path = require('path');
 const { Router } = require('express');
-const { v4: uuid } = require('uuid');
-
 const upload = require('../middleware/upload');
 const prisma = require('../lib/prisma');
 const { getSupabaseClient } = require('../lib/supabase');
 
 const router = Router();
 
-
 function buildStoragePath(originalName = '') {
   const extension = path.extname(originalName) || '.jpg';
-  return `photos/${uuid()}${extension}`;
+  const timestamp = Date.now();
+  return `photos/${timestamp}${extension}`;
 }
 
 function getBucketName() {
@@ -22,7 +20,7 @@ function getBucketName() {
   return bucket;
 }
 
-router.get('/', async (req, res, next) => {
+router.get('/', async (_, res, next) => {
   try {
     const photos = await prisma.photo.findMany({
       include: {
@@ -42,7 +40,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', upload.single("photo"), async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: `Field "${PHOTO_FIELD}" is required.` });
+      return res.status(400).json({ message: `Field "photo" is required.` });
     }
 
     if (!req.body.description || !req.body.description.trim()) {
