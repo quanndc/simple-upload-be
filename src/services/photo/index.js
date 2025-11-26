@@ -20,7 +20,11 @@ function getBucketName() {
 async function listPhotos() {
   return prisma.photo.findMany({
     include: {
+      User: true,
       comments: {
+        include: {
+          User: true,
+        },
         orderBy: { createdAt: 'asc' },
       },
     },
@@ -28,7 +32,8 @@ async function listPhotos() {
   });
 }
 
-async function uploadPhoto({ file, description }) {
+async function uploadPhoto({ file, description, userFirebaseId }) {
+  console.log(userFirebaseId);
   if (!file) {
     throw new Error('File is required');
   }
@@ -59,11 +64,15 @@ async function uploadPhoto({ file, description }) {
       storagePath,
       publicUrl,
       description,
+      user_firebase_id: userFirebaseId || null,
+    },
+    include: {
+      User: true,
     },
   });
 }
 
-async function addCommentToPhoto({ photoId, body, author }) {
+async function addCommentToPhoto({ photoId, body, author, userFirebaseId }) {
   const numericPhotoId = Number(photoId);
   if (Number.isNaN(numericPhotoId)) {
     const err = new Error('Photo id must be a number.');
@@ -81,8 +90,11 @@ async function addCommentToPhoto({ photoId, body, author }) {
   return prisma.comment.create({
     data: {
       body,
-      author,
+      user_firebase_id: userFirebaseId || null,
       photoId: numericPhotoId,
+    },
+    include: {
+      User: true,
     },
   });
 }
